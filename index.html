@@ -1,103 +1,81 @@
 <!DOCTYPE html>
-<html lang="so">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Cache-Control" content="no-store"/>
-<title>C.S Company - Admin Panel</title>
+<html lang="so"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta http-equiv="Cache-Control" content="no-store"/><title>C.S Company - Admin Panel</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
-:root{
---blue:#0b4f8b;--accent:#0b6fb5;--light:#f6f9fc;--card:#fff;--muted:#6b7280;--danger:#ff4d4f;--success:#16a34a;--warning:#f59e0b;
---shadow:0 10px 30px rgba(11,79,139,0.08);--shadow-sm:0 6px 18px rgba(11,79,139,0.05);
---radius:12px;--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-*{box-sizing:border-box}
-body{background:var(--light);margin:0;padding:20px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1e293b;-webkit-font-smoothing:antialiased}
+:root{--blue:#0b4f8b;--accent:#0b6fb5;--light:#f6f9fc;--card:#fff;--muted:#6b7280;--danger:#ff4d4f;--success:#16a34a;--warning:#f59e0b;--shadow:0 10px 30px rgba(11,79,139,0.08);--shadow-sm:0 6px 18px rgba(11,79,139,0.05);--radius:12px;--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+*{box-sizing:border-box}body{background:var(--light);margin:0;padding:20px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;color:#1e293b;-webkit-font-smoothing:antialiased}
 .box{max-width:1200px;width:100%;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;animation:fadeIn 0.5s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 header{background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-header h1{margin:0;font-size:20px;font-weight:700}
-.user-info{display:flex;align-items:center;gap:8px;font-size:14px;opacity:0.9}
-.content{padding:20px}
-.login-container{background:linear-gradient(135deg,#f4fbff,#e6f4ff);padding:24px;border-radius:var(--radius);border:1px solid #e9f2fb;margin-bottom:20px}
+header h1{margin:0;font-size:20px;font-weight:700}.user-info{display:flex;align-items:center;gap:8px;font-size:14px;opacity:0.9}
+.content{padding:20px}.login-container{background:linear-gradient(135deg,#f4fbff,#e6f4ff);padding:24px;border-radius:var(--radius);border:1px solid #e9f2fb;margin-bottom:20px}
 .login-grid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
-@media(max-width:600px){.login-grid{grid-template-columns:1fr}}
-input[type="password"],input[type="text"],textarea{padding:12px;border-radius:8px;border:1px solid #e6eef8;transition:var(--transition);font-size:14px;width:100%}
+@media(max-width:600px){.login-grid{grid-template-columns:1fr}}input[type="password"],input[type="email"],input[type="text"],textarea{padding:12px;border-radius:8px;border:1px solid #e6eef8;transition:var(--transition);font-size:14px;width:100%}
 input:focus,textarea:focus{outline:3px solid rgba(11,111,181,0.18);border-color:var(--accent)}
 .btn{padding:12px 18px;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:var(--transition);display:inline-flex;align-items:center;gap:8px;font-size:14px}
-.btn:hover{opacity:0.95;transform:translateY(-1px)}
-.btn:active{transform:translateY(0)}
-.btn:disabled{opacity:0.6;cursor:not-allowed}
-.btn.primary{background:var(--blue);color:#fff}
-.btn.secondary{background:var(--accent);color:#fff}
-.btn.danger{background:var(--danger);color:#fff}
-.btn.success{background:var(--success);color:#fff}
-.btn.warning{background:var(--warning);color:#fff}
-.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
-.btn.small{padding:8px 12px;font-size:13px}
-.muted{color:var(--muted);font-size:13px}
+.btn:hover{opacity:0.95;transform:translateY(-1px)}.btn:active{transform:translateY(0)}.btn:disabled{opacity:0.6;cursor:not-allowed}
+.btn.primary{background:var(--blue);color:#fff}.btn.secondary{background:var(--accent);color:#fff}.btn.danger{background:var(--danger);color:#fff}
+.btn.success{background:var(--success);color:#fff}.btn.warning{background:var(--warning);color:#fff}.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--blue)}
+.btn.small{padding:8px 12px;font-size:13px}.muted{color:var(--muted);font-size:13px}
 .section{margin-bottom:24px;background:var(--card);padding:18px;border-radius:var(--radius);border:1px solid #e9f2fb}
 .section-title{font-size:18px;font-weight:700;color:var(--blue);margin:0 0 14px 0;display:flex;align-items:center;gap:8px}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:768px){.grid-2{grid-template-columns:1fr}}
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
 .stat-card{background:linear-gradient(135deg,var(--blue),var(--accent));color:#fff;padding:16px;border-radius:var(--radius);text-align:center}
-.stat-number{font-size:28px;font-weight:800}
-.stat-label{font-size:13px;opacity:0.9}
+.stat-number{font-size:28px;font-weight:800}.stat-label{font-size:13px;opacity:0.9}
 .table-wrap{width:100%;overflow-x:auto;border-radius:8px;border:1px solid #e9f2fb;max-height:70vh;overflow-y:auto}
-table{width:100%;border-collapse:collapse;min-width:900px}
-th,td{padding:12px;border-bottom:1px solid #eef6fb;text-align:left;font-size:13px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:12px;border-bottom:1px solid #eef6fb;text-align:left;font-size:13px;vertical-align:middle}
 th{background:#f4fbff;color:var(--blue);font-weight:600;position:sticky;top:0;z-index:2}
-tr:hover td{background:#f9fdff}
-.actions{display:flex;gap:6px;flex-wrap:wrap}
+tr:hover td{background:#f9fdff}.actions{display:flex;gap:6px;flex-wrap:wrap}
 .badge{padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase}
-.badge.pending{background:#fef3c7;color:#92400e}
-.badge.paid{background:#d1fae5;color:#065f46}
-.badge.cancelled{background:#fee2e2;color:#991b1b}
+.badge.pending{background:#fef3c7;color:#92400e}.badge.paid{background:#d1fae5;color:#065f46}.badge.cancelled{background:#fee2e2;color:#991b1b}
 .upload-area{border:2px dashed #cbd5e1;border-radius:var(--radius);padding:24px;text-align:center;transition:var(--transition);cursor:pointer;background:var(--card)}
-.upload-area:hover{border-color:var(--accent);background:#f9fdff}
-.upload-area.dragover{border-color:var(--blue);background:#f4fbff}
+.upload-area:hover{border-color:var(--accent);background:#f9fdff}.upload-area.dragover{border-color:var(--blue);background:#f4fbff}
 .preview-img{max-width:100%;max-height:150px;border-radius:8px;margin-top:12px;box-shadow:var(--shadow-sm)}
 .preview-video{max-width:100%;max-height:150px;border-radius:8px;margin-top:12px;box-shadow:var(--shadow-sm)}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:2000;justify-content:center;align-items:center}
-.modal.show{display:flex}
-.modal-content{background:var(--card);padding:24px;border-radius:var(--radius);max-width:500px;width:90%;max-height:80vh;overflow-y:auto;animation:scaleIn 0.3s ease}
+.modal.show{display:flex}.modal-content{background:var(--card);padding:24px;border-radius:var(--radius);max-width:500px;width:90%;max-height:80vh;overflow-y:auto;animation:scaleIn 0.3s ease}
 @keyframes scaleIn{from{transform:scale(0.9)}to{transform:scale(1)}}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .close-btn{font-size:28px;cursor:pointer;color:var(--muted);line-height:1;transition:var(--transition)}
 .close-btn:hover{color:var(--danger)}
 .notification{position:fixed;top:20px;right:20px;background:var(--success);color:#fff;padding:14px 18px;border-radius:var(--radius);box-shadow:var(--shadow);z-index:3000;display:none;animation:slideInRight 0.3s ease}
-.notification.error{background:var(--danger)}
-.notification.show{display:block}
+.notification.error{background:var(--danger)}.notification.show{display:block}
 @keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .video-upload-section{margin-top:16px;padding:16px;background:#f9fdff;border-radius:8px;border:1px solid #e9f2fb}
 .apk-upload-section{margin-top:16px;padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #d1fae5}
 .apk-info{font-size:11px;color:var(--muted);margin-top:4px}
+.loading{opacity:0.6;pointer-events:none}
+.online-status{position:fixed;top:10px;left:10px;background:var(--success);color:#fff;padding:6px 10px;border-radius:20px;font-size:12px;z-index:10000}
+.offline-status{background:var(--danger)}
+.error-box{background:#fee2e2;border-left:4px solid var(--danger);padding:12px;margin:12px 0;border-radius:6px;display:none}
 </style>
 </head>
 <body>
+<div class="online-status" id="onlineStatus">🌐 Online</div>
+<div class="error-box" id="errorBox"></div>
+
 <div class="box">
 <header>
 <h1>🔱 C.S Company - Admin Panel</h1>
-<div class="user-info">
-<span id="adminUser">Ciise Shoole</span>
-</div>
+<div class="user-info"><span id="adminUser">Not Logged In</span></div>
 </header>
 
 <div class="content">
-<!-- LOGIN (SECURE) -->
+<!-- LOGIN - NO HARDCODED CREDENTIALS -->
 <div id="loginSection" class="login-container">
-<h3 style="margin:0 0 10px 0;color:var(--blue)">🔐 Login</h3>
-<div class="login-grid">
-<div>
-<div class="muted">Password: <code>••••••••</code> (Hidden)</div>
-<input id="password" type="password" placeholder="Geli password" onkeypress="if(event.key==='Enter')login()">
-</div>
-<div style="display:flex;gap:8px">
+<h3 style="margin:0 0 10px 0;color:var(--blue)">🔐 Admin Login</h3>
+<div class="muted">Fadlan geli email iyo password (admin only)</div>
+<div style="height:8px"></div>
+<input id="email" type="email" placeholder="admin@company.com">
+<div style="height:8px"></div>
+<input id="password" type="password" placeholder="********">
+<div style="height:12px"></div>
 <button class="btn primary" onclick="login()">Login</button>
-<button class="btn secondary" onclick="togglePassword()">Show</button>
-</div>
-</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -108,6 +86,21 @@ tr:hover td{background:#f9fdff}
 <div class="stat-card"><div class="stat-number" id="totalRevenue">$0</div><div class="stat-label">Total Revenue</div></div>
 <div class="stat-card"><div class="stat-number" id="pendingOrders">0</div><div class="stat-label">Pending</div></div>
 <div class="stat-card"><div class="stat-number" id="totalMessages">0</div><div class="stat-label">Messages</div></div>
+</div>
+
+<!-- PASSWORD CHANGE -->
+<div class="section">
+<h3 class="section-title">⚙️ Admin Settings</h3>
+<div style="background:#f9fdff;padding:16px;border-radius:8px;border:1px solid #e9f2fb">
+<div class="muted">Change Password (Requires recent login)</div>
+<div style="height:8px"></div>
+<input id="newPassword" type="password" placeholder="New Password (6+ chars)">
+<div style="height:8px"></div>
+<input id="confirmPassword" type="password" placeholder="Confirm Password">
+<div style="height:12px"></div>
+<button class="btn warning" onclick="changePassword()">🔄 Change Password</button>
+<button class="btn ghost" onclick="logout()">🔒 Logout</button>
+</div>
 </div>
 
 <!-- LOGO UPLOAD -->
@@ -207,13 +200,11 @@ tr:hover td{background:#f9fdff}
 <!-- ORDERS TABLE -->
 <div class="section">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-<h3 class="section-title">📋 Orders</h3>
+<h3 class="section-title">📋 Orders (Real-time)</h3>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
-<button class="btn secondary small" onclick="loadOrders()">🔄 Refresh</button>
-<button class="btn success small" onclick="exportCSV()">📥 Export CSV</button>
+<button class="btn secondary small" onclick="exportCSV()">📥 Export CSV</button>
 <button class="btn warning small" onclick="viewMessages()">💬 Messages (<span id="msgCount">0</span>)</button>
 <button class="btn danger small" onclick="clearAll()">🗑️ Clear All</button>
-<button class="btn ghost small" onclick="logout()">🔒 Logout</button>
 </div>
 </div>
 <div class="table-wrap">
@@ -234,335 +225,93 @@ tr:hover td{background:#f9fdff}
 <div id="modal" class="modal"></div>
 
 <script>
-// SECURE PASSWORD STORAGE
-const SECURE_PASS_KEY = 'cs_admin_password_hash';
-const ADMIN_PASSWORD = 'Ciise000@'; // Initial password
-
-// Initialize password if not set
-if(!localStorage.getItem(SECURE_PASS_KEY)){
-localStorage.setItem(SECURE_PASS_KEY, btoa(ADMIN_PASSWORD));
-}
-
-// AUTH
-function login(){
-const pass = document.getElementById('password').value;
-const storedHash = localStorage.getItem(SECURE_PASS_KEY);
-if(btoa(pass) === storedHash){
-document.getElementById('loginSection').style.display = 'none';
-document.getElementById('dashboard').style.display = 'block';
-localStorage.setItem('cs_admin_session', 'true');
-showNotification('✅ Login wanaagsan!');
-loadAll();
-}else{
-showNotification('❌ Password khaldan!', 'error');
-document.getElementById('password').value = '';
-}
-}
-
-function logout(){
-if(!confirm('Ma hubtaa inaad rabto logout?')) return;
-localStorage.removeItem('cs_admin_session');
-document.getElementById('loginSection').style.display = 'block';
-document.getElementById('dashboard').style.display = 'none';
-showNotification('👋 Logout successful!');
-}
-
-function togglePassword(){
-const input = document.getElementById('password'), btn = document.getElementById('togglePass');
-input.type = input.type === 'password' ? 'text' : 'password';
-btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
-}
-
-// MEDIA UPLOAD
-function handleImageUpload(e, type){
-const file = e.target.files[0];
-if(!file) return;
-if(!file.type.startsWith('image/')){ showNotification('📁 File waa inuu yahay sawir!', 'error'); return; }
-if(file.size > 2*1024*1024){ showNotification('📏 Sawirku waa inuu ka yar yahay 2MB!', 'error'); return; }
-
-const reader = new FileReader();
-reader.onload = function(event){
-const imgData = event.target.result;
-localStorage.setItem(`cs_${type}_image`, imgData);
-document.getElementById(`${type}Preview`).src = imgData;
-document.getElementById(`${type}Preview`).style.display = 'block';
-showNotification(`✅ ${type} image waa la keydiyay!`);
-localStorage.setItem('cs_image_updated', Date.now());
+// 🔥 FIREBASE CONFIG - BEDDEL TAN KU DHEJI YOUR CREDENTIALS
+// Ka heli: Firebase Console → Project Settings → General → Your apps → Web
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
-reader.readAsDataURL(file);
+
+// Validate config
+if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
+  showError("⚠️ ERROR: Firebase config ma beddelin! Tag Firebase Console → Project Settings → General → Copy config.");
+} else {
+  try {
+    firebase.initializeApp(firebaseConfig);
+  } catch (e) {
+    showError(`❌ FIREBASE INIT ERROR: ${e.message}. Hubi config-ka oo ka mid ah.`);
+  }
 }
 
-function handleVideoUpload(e){
-const file = e.target.files[0];
-if(!file) return;
-if(!file.type.startsWith('video/')){ showNotification('📁 File waa inuu yahay video!', 'error'); return; }
-if(file.size > 5*1024*1024){ showNotification('📹 Videogu waa inuu ka yar yahay 5MB!', 'error'); return; }
+const db = firebase.database();
+const storage = firebase.storage();
+const auth = firebase.auth();
 
-const reader = new FileReader();
-reader.onload = function(event){
-const videoData = event.target.result;
-localStorage.setItem('cs_supermarket_video', videoData);
-const video = document.getElementById('videoPreview');
-video.src = videoData;
-video.style.display = 'block';
-showNotification('✅ Video waa la keydiyay!');
-localStorage.setItem('cs_video_updated', Date.now());
-};
-reader.readAsDataURL(file);
+const NEW_NUMBER = '0613195143';
+let currentUser = null;
+
+const elements = {};
+['email','password'].forEach(id=>{elements[id]=document.getElementById(id);});
+const errorBox = document.getElementById('errorBox');
+
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.style.display = 'block';
+  setTimeout(() => errorBox.style.display = 'none', 15000);
 }
 
-function uploadAPK(system){
-const input = document.createElement('input');
-input.type = 'file';
-input.accept = '.apk';
-input.onchange = function(e){
-const file = e.target.files[0];
-if(!file) return;
-if(file.size > 10*1024*1024){ showNotification('📦 APK waa inuu ka yar yahay 10MB!', 'error'); return; }
+// 🔐 LOGIN - NO HARDCODED CREDENTIALS
+function login(){const email=document.getElementById('email').value.trim();const password=document.getElementById('password').value;if(!email||!password){showNotification('Fadlan geli email iyo password!','error');return;}document.body.classList.add('loading');auth.signInWithEmailAndPassword(email,password).then(userCredential=>{currentUser=userCredential.user;document.getElementById('adminUser').textContent=currentUser.email.split('@')[0];document.getElementById('loginSection').style.display='none';document.getElementById('dashboard').style.display='block';showNotification('✅ Login wanaagsan!');loadAll();listenToOrders();}).catch(error=>{showNotification(`❌ Login failed: ${error.message}`,'error');showError(`Error: ${error.message}`);}).finally(()=>document.body.classList.remove('loading'));}
 
-const reader = new FileReader();
-reader.onload = function(event){
-const apkData = event.target.result;
-const apks = JSON.parse(localStorage.getItem('cs_apk_files') || '{}');
-apks[system] = {name: file.name, data: apkData, size: file.size, time: Date.now()};
-localStorage.setItem('cs_apk_files', JSON.stringify(apks));
-showNotification(`✅ ${system} APK waa la keydiyay!`);
-localStorage.setItem('cs_apk_updated', Date.now());
-// Update info
-const info = document.getElementById(`${system}APKInfo`);
-info.textContent = `📦 ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
-};
-reader.readAsDataURL(file);
-};
-input.click();
-}
+function logout(){if(!confirm('Ma hubtaa inaad rabto logout?'))return;auth.signOut().then(()=>{currentUser=null;document.getElementById('loginSection').style.display='block';document.getElementById('dashboard').style.display='none';document.getElementById('adminUser').textContent='Not Logged In';showNotification('👋 Logout successful!');});}
 
-function loadAll(){
-loadImages();
-loadVideo();
-loadStats();
-loadMessageCount();
-loadOrders();
-loadAPKInfo();
-}
+// 🔑 CHANGE PASSWORD
+function changePassword(){const newPassword=document.getElementById('newPassword').value;const confirmPassword=document.getElementById('confirmPassword').value;if(!newPassword||!confirmPassword){showNotification('Fadlan geli labada password!','error');return;}if(newPassword!==confirmPassword){showNotification('Password-ka isma dhigto!','error');return;}if(newPassword.length<6){showNotification('Password waa inuu ka badan yahay 6 characters!','error');return;}if(!currentUser){showNotification('Fadlan login!','error');return;}document.body.classList.add('loading');currentUser.updatePassword(newPassword).then(()=>{document.getElementById('newPassword').value='';document.getElementById('confirmPassword').value='';showNotification('✅ Password waa la beddelay si guud!');}).catch(error=>{if(error.code==='auth/requires-recent-login'){showNotification('❌ Fadlan logout kadib login si aad u beddesho password!','error');logout();}else{showNotification(`❌ Error: ${error.message}`,'error');showError(`Password change failed: ${error.message}`);}}).finally(()=>document.body.classList.remove('loading'));}
 
-function loadImages(){
-['logo','pharmacy','hospital','supermarket'].forEach(type => {
-const img = localStorage.getItem(`cs_${type}_image`);
-const preview = document.getElementById(`${type}Preview`);
-if(img && preview){ preview.src = img; preview.style.display = 'block'; }
-});
-}
+auth.onAuthStateChanged(user=>{if(user){currentUser=user;document.getElementById('adminUser').textContent=user.email.split('@')[0];document.getElementById('loginSection').style.display='none';document.getElementById('dashboard').style.display='block';loadAll();listenToOrders();}});
 
-function loadVideo(){
-const videoData = localStorage.getItem('cs_supermarket_video');
-if(videoData){
-const video = document.getElementById('videoPreview');
-video.src = videoData;
-video.style.display = 'block';
-}
-}
+// 📤 UPLOAD
+function handleImageUpload(e,type){const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('image/')){showNotification('📁 File waa inuu yahay sawir!','error');return;}if(file.size>2*1024*1024){showNotification('📏 Sawirku waa inuu ka yar yahay 2MB!','error');return;}if(!currentUser){showNotification('Fadlan login!','error');return;}document.body.classList.add('loading');const storageRef=storage.ref().child(`media/images/${type}/${Date.now()}_${file.name}`);storageRef.put(file).then(snapshot=>snapshot.ref.getDownloadURL()).then(downloadURL=>db.ref(`media/images/${type}`).set({url:downloadURL,name:file.name,uploadedBy:currentUser.email})).then(()=>{document.getElementById(`${type}Preview`).src=downloadURL;document.getElementById(`${type}Preview`).style.display='block';showNotification(`✅ ${type} image waa la keydiyay!`);}).catch(error=>{showNotification(`❌ Upload failed: ${error.message}`,'error');showError(`Upload error: ${error.message}`);}).finally(()=>document.body.classList.remove('loading'));}
 
-function loadAPKInfo(){
-const apks = JSON.parse(localStorage.getItem('cs_apk_files') || '{}');
-Object.entries(apks).forEach(([system, data]) => {
-const info = document.getElementById(`${system}APKInfo`);
-if(info){
-info.textContent = `📦 ${data.name} (${(data.size/1024/1024).toFixed(1)}MB)`;
-}
-});
-}
+function handleVideoUpload(e){const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('video/')){showNotification('📁 File waa inuu yahay video!','error');return;}if(file.size>5*1024*1024){showNotification('📹 Videogu waa inuu ka yar yahay 5MB!','error');return;}if(!currentUser){showNotification('Fadlan login!','error');return;}document.body.classList.add('loading');const storageRef=storage.ref().child(`media/videos/supermarket/${Date.now()}_${file.name}`);storageRef.put(file).then(snapshot=>snapshot.ref.getDownloadURL()).then(downloadURL=>db.ref('media/videos/supermarket').set({url:downloadURL,name:file.name,uploadedBy:currentUser.email})).then(()=>{const video=document.getElementById('videoPreview');video.src=downloadURL;video.style.display='block';showNotification('✅ Video waa la keydiyay!');}).catch(error=>{showNotification(`❌ Upload failed: ${error.message}`,'error');showError(`Video upload error: ${error.message}`);}).finally(()=>document.body.classList.remove('loading'));}
 
-// BROADCAST
-function sendBroadcast(){
-const msg = document.getElementById('broadcastMsg').value.trim();
-if(!msg){ showNotification('Fadlan qor farriin!', 'error'); return; }
-const data = {message: msg, time: Date.now(), type: 'broadcast'};
-localStorage.setItem('cs_shared_notification', JSON.stringify(data));
-showNotification('📢 Farriinta waxaa la wadaagay dadka dhan!');
-document.getElementById('broadcastMsg').value = '';
-}
+function uploadAPK(system){const input=document.createElement('input');input.type='file';input.accept='.apk';input.onchange=function(e){const file=e.target.files[0];if(!file)return;if(file.size>10*1024*1024){showNotification('📦 APK waa inuu ka yar yahay 10MB!','error');return;}if(!currentUser){showNotification('Fadlan login!','error');return;}document.body.classList.add('loading');const storageRef=storage.ref().child(`apks/${system}/${Date.now()}_${file.name}`);storageRef.put(file).then(snapshot=>snapshot.ref.getDownloadURL()).then(downloadURL=>db.ref(`apks/${system}`).set({url:downloadURL,name:file.name,size:file.size,uploadedBy:currentUser.email})).then(()=>{showNotification(`✅ ${system} APK waa la keydiyay!`);document.getElementById(`${system}APKInfo`).textContent=`📦 ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;}).catch(error=>{showNotification(`❌ Upload failed: ${error.message}`,'error');showError(`APK upload error: ${error.message}`);}).finally(()=>document.body.classList.remove('loading'));};input.click();}
 
-function clearBroadcast(){
-localStorage.removeItem('cs_shared_notification');
-document.getElementById('broadcastMsg').value = '';
-showNotification('🗑️ Farriinta waa laga saaray');
-}
+// 📺 LOAD DATA
+function loadAll(){loadImages();loadVideo();loadStats();loadMessageCount();loadAPKInfo();}
+function loadImages(){['logo','pharmacy','hospital','supermarket'].forEach(type=>{db.ref(`media/images/${type}`).once('value',snapshot=>{const data=snapshot.val();if(data&&data.url){const preview=document.getElementById(`${type}Preview`);preview.src=data.url;preview.style.display='block';}}).catch(err=>showError(`${type} image load failed: ${err.message}`));});}
+function loadVideo(){db.ref('media/videos/supermarket').once('value',snapshot=>{const data=snapshot.val();if(data&&data.url){const video=document.getElementById('videoPreview');video.src=data.url;video.style.display='block';}}).catch(err=>showError(`Video load failed: ${err.message}`));}
+function loadAPKInfo(){['pharmacy','hospital','supermarket'].forEach(system=>{db.ref(`apks/${system}`).once('value',snapshot=>{const data=snapshot.val();if(data){document.getElementById(`${system}APKInfo`).textContent=`📦 ${data.name} (${(data.size/1024/1024).toFixed(1)}MB)`;}}).catch(err=>showError(`${system} APK load failed: ${err.message}`));});}
 
-// ORDERS
-function loadOrders(){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const tbody = document.querySelector('#ordersTable tbody');
-tbody.innerHTML = '';
-if(!orders.length){
-tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--muted)">📥 Ma jiraan orders.</td></tr>';
-document.getElementById('totalOrders').textContent = '0';
-document.getElementById('totalRevenue').textContent = '$0';
-document.getElementById('pendingOrders').textContent = '0';
-return;
-}
-orders.slice().reverse().forEach(o => tbody.insertAdjacentHTML('beforeend', makeRowHTML(o)));
-loadStats();
-}
+// 📢 BROADCAST
+function sendBroadcast(){const msg=document.getElementById('broadcastMsg').value.trim();if(!msg){showNotification('Fadlan qor farriin!','error');return;}if(!currentUser){showNotification('Fadlan login!','error');return;}db.ref('broadcasts/current').set({message:msg,time:Date.now(),type:'broadcast',author:currentUser.email}).then(()=>{showNotification('📢 Farriinta waxaa la wadaagay dadka dhan!');document.getElementById('broadcastMsg').value='';}).catch(err=>showError(`Broadcast failed: ${err.message}`));}
+function clearBroadcast(){db.ref('broadcasts/current').remove().then(()=>{document.getElementById('broadcastMsg').value='';showNotification('🗑️ Farriinta waa laga saaray');}).catch(err=>showError(`Clear broadcast failed: ${err.message}`));}
 
-function makeRowHTML(o){
-return `<tr>
-<td><span class="muted">${escapeHtml(o.id)}</span></td>
-<td><strong>${escapeHtml(o.name)}</strong></td>
-<td><a href="tel:${escapeHtml(o.phone)}" style="color:var(--blue)">${escapeHtml(o.phone)}</a></td>
-<td>${escapeHtml(o.region)}</td>
-<td>${escapeHtml(o.product)}</td>
-<td>${escapeHtml(o.payment)}</td>
-<td><strong>$${escapeHtml(o.price)}</strong></td>
-<td><span class="muted" style="font-size:12px">${new Date(o.time).toLocaleString()}</span></td>
-<td><span class="badge ${o.status||'pending'}">${o.status||'pending'}</span></td>
-<td class="actions">
-<button class="btn small" onclick="viewOrder('${o.id}')">👁️ View</button>
-<button class="btn small ${o.status==='paid'?'warning':'success'}" onclick="toggleStatus('${o.id}')">${o.status==='paid'?'📌 Unpay':'✅ Paid'}</button>
-<button class="btn small danger" onclick="deleteOrder('${o.id}')">🗑️ Delete</button>
-</td></tr>`;
-}
+// 📋 ORDERS
+function listenToOrders(){db.ref('orders').on('value',snapshot=>{const orders=[];snapshot.forEach(child=>orders.push({id:child.key,...child.val()}));displayOrders(orders);},err=>showError(`Orders sync failed: ${err.message}`));}
+function displayOrders(orders){const tbody=document.querySelector('#ordersTable tbody');tbody.innerHTML='';if(!orders.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--muted)">📥 Ma jiraan orders.</td></tr>';document.getElementById('totalOrders').textContent='0';document.getElementById('totalRevenue').textContent='$0';document.getElementById('pendingOrders').textContent='0';return;}orders.reverse().forEach(o=>tbody.insertAdjacentHTML('beforeend',makeRowHTML(o)));loadStats();}
+function loadStats(){db.ref('orders').once('value',snapshot=>{const orders=[];snapshot.forEach(child=>orders.push(child.val()));const total=orders.length;const revenue=orders.reduce((sum,o)=>sum+(Number(o.price)||0),0);const pending=orders.filter(o=>!o.status||o.status==='pending').length;document.getElementById('totalOrders').textContent=total;document.getElementById('totalRevenue').textContent=`$${revenue}`;document.getElementById('pendingOrders').textContent=pending;}).catch(err=>showError(`Stats load failed: ${err.message}`));}
 
-function loadStats(){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const total = orders.length;
-const revenue = orders.reduce((sum, o) => sum + (Number(o.price)||0), 0);
-const pending = orders.filter(o => !o.status || o.status === 'pending').length;
-document.getElementById('totalOrders').textContent = total;
-document.getElementById('totalRevenue').textContent = `$${revenue}`;
-document.getElementById('pendingOrders').textContent = pending;
-}
-
-function viewOrder(id){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const o = orders.find(x => x.id === id);
-if(!o){ showNotification('Order lama helin!', 'error'); return; }
-const modal = document.getElementById('modal');
-modal.innerHTML = `
-<div class="modal-content">
-<div class="modal-header"><h3>Order Details</h3><span class="close-btn" onclick="closeModal()">&times;</span></div>
-<div style="line-height:1.8">
-<p><strong>ID:</strong> ${escapeHtml(o.id)}</p>
-<p><strong>Magac:</strong> ${escapeHtml(o.name)}</p>
-<p><strong>Phone:</strong> <a href="tel:${escapeHtml(o.phone)}">${escapeHtml(o.phone)}</a></p>
-<p><strong>Region:</strong> ${escapeHtml(o.region)}</p>
-<p><strong>Product:</strong> ${escapeHtml(o.product)}</p>
-<p><strong>Payment:</strong> ${escapeHtml(o.payment)}</p>
-<p><strong>Price:</strong> <strong style="color:var(--blue)">$${escapeHtml(o.price)}</strong></p>
-<p><strong>Time:</strong> <span class="muted">${new Date(o.time).toLocaleString()}</span></p>
-<p><strong>Status:</strong> <span class="badge ${o.status||'pending'}">${o.status||'pending'}</span></p>
-</div>
-</div>`;
-modal.classList.add('show');
-}
-
-function closeModal(){ document.getElementById('modal').classList.remove('show'); }
-
-function toggleStatus(id){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const order = orders.find(x => x.id === id);
-if(!order){ showNotification('Order lama helin!', 'error'); return; }
-order.status = order.status === 'paid' ? 'pending' : 'paid';
-localStorage.setItem('cs_orders', JSON.stringify(orders));
-loadOrders();
-showNotification(`✅ Order ${id} waa la update-gareeyay!`);
-localStorage.setItem('cs_order_updated', Date.now());
-}
-
-function deleteOrder(id){
-if(!confirm(`⚠️ Ma hubtaa inaad tirtirto order: ${id}?`)) return;
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]').filter(x => x.id !== id);
-localStorage.setItem('cs_orders', JSON.stringify(orders));
-loadOrders();
-showNotification('🗑️ Order waa la tirtiray!');
-localStorage.setItem('cs_order_updated', Date.now());
-}
-
-function exportCSV(){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-if(!orders.length){ showNotification('📥 Ma jiraan orders!', 'error'); return; }
-const csv = ['ID,Name,Phone,Region,Product,Payment,Price,Time,Status'];
-orders.forEach(o => csv.push([o.id,o.name,o.phone,o.region,o.product,o.payment,o.price,o.time,o.status||'pending'].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')));
-const blob = new Blob([csv.join('\n')], {type:'text/csv'});
-const a = document.createElement('a');
-a.href = URL.createObjectURL(blob);
-a.download = `cs_orders_${new Date().toISOString().slice(0,10)}.csv`;
-a.click();
-showNotification('📥 CSV waa la soo rogay!');
-}
-
-function clearAll(){
-if(!confirm('⚠️ DANGER! Ma hubtaa inaad tirtirto dhammaan orders-ka?')) return;
-localStorage.removeItem('cs_orders');
-loadOrders();
-showNotification('🗑️ Dhammaan orders waa la tirtiray!');
-}
-
-// MESSAGES
-function viewMessages(){
-const msgs = JSON.parse(localStorage.getItem('cs_messages') || '[]');
-const modal = document.getElementById('modal');
-if(!msgs.length){
-modal.innerHTML = `
-<div class="modal-content">
-<div class="modal-header"><h3>Messages</h3><span class="close-btn" onclick="closeModal()">&times;</span></div>
-<p style="text-align:center;color:var(--muted)">📬 Ma jiraan fariimo.</p>
-</div>`;
-}else{
-const html = msgs.slice().reverse().map(m => `
-<div style="border-bottom:1px solid #eef6fb;padding:12px 0">
-<strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.phone||'No phone')})
-<small class="muted" style="float:right">${new Date(m.time).toLocaleString()}</small>
-<p style="margin:6px 0">${escapeHtml(m.message)}</p>
-<button class="btn small danger" onclick="deleteMessage('${m.id}')">Delete</button>
-</div>`).join('');
-modal.innerHTML = `
-<div class="modal-content">
-<div class="modal-header"><h3>Messages (${msgs.length})</h3><span class="close-btn" onclick="closeModal()">&times;</span></div>
-<div style="max-height:60vh;overflow-y:auto">${html}</div>
-</div>`;
-}
-modal.classList.add('show');
-}
-
-function deleteMessage(id){
-if(!confirm('Delete message?')) return;
-const msgs = JSON.parse(localStorage.getItem('cs_messages') || '[]').filter(x => x.id !== id);
-localStorage.setItem('cs_messages', JSON.stringify(msgs));
-loadMessageCount();
-showNotification('🗑️ Message waa la tirtiray!');
-}
-
-function loadMessageCount(){
-const msgs = JSON.parse(localStorage.getItem('cs_messages') || '[]');
-document.getElementById('msgCount').textContent = msgs.length;
-document.getElementById('totalMessages').textContent = msgs.length;
-}
+// 💬 MESSAGES
+function viewMessages(){db.ref('messages').once('value',snapshot=>{const msgs=[];snapshot.forEach(child=>msgs.push({id:child.key,...child.val()}));const modal=document.getElementById('modal');if(!msgs.length){modal.innerHTML=`<div class="modal-content"><div class="modal-header"><h3>Messages</h3><span class="close-btn" onclick="closeModal()">&times;</span></div><p style="text-align:center;color:var(--muted)">📬 Ma jiraan fariimo.</p></div>`;}else{const html=msgs.reverse().map(m=>`<div style="border-bottom:1px solid #eef6fb;padding:12px 0"><strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.phone||'No phone')})<small class="muted" style="float:right">${new Date(m.time).toLocaleString()}</small><p style="margin:6px 0">${escapeHtml(m.message)}</p><button class="btn small danger" onclick="deleteMessage('${m.id}')">Delete</button></div>`).join('');modal.innerHTML=`<div class="modal-content"><div class="modal-header"><h3>Messages (${msgs.length})</h3><span class="close-btn" onclick="closeModal()">&times;</span></div><div style="max-height:60vh;overflow-y:auto">${html}</div></div>`;}modal.classList.add('show');}).catch(err=>showError(`Messages load failed: ${err.message}`));}
+function deleteMessage(id){if(!confirm('Delete message?'))return;db.ref(`messages/${id}`).remove().then(()=>{showNotification('🗑️ Message waa la tirtiray!');}).catch(err=>showError(`Message delete failed: ${err.message}`));}
+function loadMessageCount(){db.ref('messages').on('value',snapshot=>{document.getElementById('msgCount').textContent=snapshot.numChildren();},err=>showError(`Message count failed: ${err.message}`));}
 
 // ESCAPE HTML
-function escapeHtml(s){ 
-return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); 
-}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
-// STORAGE SYNC
-window.addEventListener('storage', e => {
-if(e.key === 'cs_order_updated') loadOrders();
-if(e.key === 'cs_message_updated') loadMessageCount();
-if(e.key === 'cs_image_updated') loadImages();
-if(e.key === 'cs_video_updated') loadVideo();
-if(e.key === 'cs_apk_updated') loadAPKInfo();
-});
+// NOTIFICATION
+function showNotification(msg,type='success'){const n=document.getElementById('notification');n.textContent=msg;n.className=`notification show ${type}`;setTimeout(()=>n.classList.remove('show'),4000);}
+
+function setupDragDrop(){['logoUpload','pharmacyUpload','hospitalUpload','supermarketUpload','videoUpload'].forEach(id=>{const area=document.getElementById(id);if(!area)return;area.addEventListener('dragover',e=>{e.preventDefault();area.classList.add('dragover');});area.addEventListener('dragleave',()=>area.classList.remove('dragover'));area.addEventListener('drop',e=>{e.preventDefault();area.classList.remove('dragover');if(id==='videoUpload'){const file=e.dataTransfer.files[0];document.getElementById('videoInput').files=e.dataTransfer.files;handleVideoUpload({target:{files:[file]}});}else{const type=id.replace('Upload','').replace('logo','logo');const file=e.dataTransfer.files[0];document.getElementById(type+'Input').files=e.dataTransfer.files;handleImageUpload({target:{files:[file]}},type);}});});}
 
 // INIT
-(function init(){
-const isLogged = localStorage.getItem('cs_admin_session') === 'true';
-if(isLogged){
-document.getElementById('loginSection').style.display = 'none';
-document.getElementById('dashboard').style.display = 'block';
-loadAll();
-}
-setupDragDrop();
-})();
+(function init(){setupDragDrop();})();
 </script>
 </body>
 </html>
