@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Cache-Control" content="no-store"/>
 <title>C.S Company - Admin Panel</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <style>
 :root{
 --blue:#0b4f8b;--accent:#0b6fb5;--light:#f6f9fc;--card:#fff;--muted:#6b7280;--danger:#ff4d4f;--success:#16a34a;--warning:#f59e0b;
@@ -22,7 +26,7 @@ header h1{margin:0;font-size:20px;font-weight:700}
 .login-container{background:linear-gradient(135deg,#f4fbff,#e6f4ff);padding:24px;border-radius:var(--radius);border:1px solid #e9f2fb;margin-bottom:20px}
 .login-grid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
 @media(max-width:600px){.login-grid{grid-template-columns:1fr}}
-input[type="password"],input[type="text"],textarea{padding:12px;border-radius:8px;border:1px solid #e6eef8;transition:var(--transition);font-size:14px;width:100%}
+input[type="password"],input[type="email"],input[type="text"],textarea{padding:12px;border-radius:8px;border:1px solid #e6eef8;transition:var(--transition);font-size:14px;width:100%}
 input:focus,textarea:focus{outline:3px solid rgba(11,111,181,0.18);border-color:var(--accent)}
 .btn{padding:12px 18px;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:var(--transition);display:inline-flex;align-items:center;gap:8px;font-size:14px}
 .btn:hover{opacity:0.95;transform:translateY(-1px)}
@@ -73,31 +77,33 @@ tr:hover td{background:#f9fdff}
 .video-upload-section{margin-top:16px;padding:16px;background:#f9fdff;border-radius:8px;border:1px solid #e9f2fb}
 .apk-upload-section{margin-top:16px;padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #d1fae5}
 .apk-info{font-size:11px;color:var(--muted);margin-top:4px}
+.loading{opacity:0.6;pointer-events:none}
+.online-status{position:fixed;top:10px;left:10px;background:var(--success);color:#fff;padding:6px 10px;border-radius:20px;font-size:12px;z-index:10000}
+.offline-status{background:var(--danger)}
 </style>
 </head>
 <body>
+<div class="online-status" id="onlineStatus">🌐 Online</div>
+
 <div class="box">
 <header>
 <h1>🔱 C.S Company - Admin Panel</h1>
 <div class="user-info">
-<span id="adminUser">Ciise Shoole</span>
+<span id="adminUser">Login Required</span>
 </div>
 </header>
 
 <div class="content">
-<!-- LOGIN (SECURE) -->
+<!-- LOGIN (FIREBASE AUTH) - NO PRE-FILLED CREDENTIALS -->
 <div id="loginSection" class="login-container">
-<h3 style="margin:0 0 10px 0;color:var(--blue)">🔐 Login</h3>
-<div class="login-grid">
-<div>
-<div class="muted">Password: <code>••••••••</code> (Hidden)</div>
-<input id="password" type="password" placeholder="Geli password" onkeypress="if(event.key==='Enter')login()">
-</div>
-<div style="display:flex;gap:8px">
+<h3 style="margin:0 0 10px 0;color:var(--blue)">🔐 Firebase Login</h3>
+<div class="muted">Fadlan geli email-kaaga iyo password-ka (admin only)</div>
+<div style="height:8px"></div>
+<input id="email" type="email" placeholder="admin@example.com">
+<div style="height:8px"></div>
+<input id="password" type="password" placeholder="Password">
+<div style="height:12px"></div>
 <button class="btn primary" onclick="login()">Login</button>
-<button class="btn secondary" onclick="togglePassword()">Show</button>
-</div>
-</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -207,10 +213,9 @@ tr:hover td{background:#f9fdff}
 <!-- ORDERS TABLE -->
 <div class="section">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-<h3 class="section-title">📋 Orders</h3>
+<h3 class="section-title">📋 Orders (Real-time)</h3>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
-<button class="btn secondary small" onclick="loadOrders()">🔄 Refresh</button>
-<button class="btn success small" onclick="exportCSV()">📥 Export CSV</button>
+<button class="btn secondary small" onclick="exportCSV()">📥 Export CSV</button>
 <button class="btn warning small" onclick="viewMessages()">💬 Messages (<span id="msgCount">0</span>)</button>
 <button class="btn danger small" onclick="clearAll()">🗑️ Clear All</button>
 <button class="btn ghost small" onclick="logout()">🔒 Logout</button>
@@ -234,62 +239,111 @@ tr:hover td{background:#f9fdff}
 <div id="modal" class="modal"></div>
 
 <script>
-// SECURE PASSWORD STORAGE
-const SECURE_PASS_KEY = 'cs_admin_password_hash';
-const ADMIN_PASSWORD = 'Ciise000@'; // Initial password
+// 🔥 FIREBASE CONFIG - BEDDEL TAN KU DHEJI YOUR CREDENTIALS
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 
-// Initialize password if not set
-if(!localStorage.getItem(SECURE_PASS_KEY)){
-localStorage.setItem(SECURE_PASS_KEY, btoa(ADMIN_PASSWORD));
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const storage = firebase.storage();
+const auth = firebase.auth();
+
+const NEW_NUMBER = '0613195143';
+
+let currentUser = null;
+
+const elements = {};
+['email','password','onlineStatus'].forEach(id => {
+elements[id] = document.getElementById(id);
+});
+elements.onlineStatus = document.getElementById('onlineStatus');
+
+function updateOnlineStatus(){
+const isOnline = navigator.onLine;
+elements.onlineStatus.textContent = isOnline ? '🌐 Online' : '❌ Offline';
+elements.onlineStatus.className = isOnline ? 'online-status' : 'online-status offline-status';
 }
 
-// AUTH
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+// 🔐 AUTH - NO PRE-FILLED CREDENTIALS
 function login(){
-const pass = document.getElementById('password').value;
-const storedHash = localStorage.getItem(SECURE_PASS_KEY);
-if(btoa(pass) === storedHash){
+const email = document.getElementById('email').value.trim();
+const password = document.getElementById('password').value;
+if(!email || !password){ showNotification('Fadlan geli email iyo password!', 'error'); return; }
+
+document.body.classList.add('loading');
+auth.signInWithEmailAndPassword(email, password)
+.then(userCredential => {
+currentUser = userCredential.user;
+document.getElementById('adminUser').textContent = currentUser.email.split('@')[0];
 document.getElementById('loginSection').style.display = 'none';
 document.getElementById('dashboard').style.display = 'block';
-localStorage.setItem('cs_admin_session', 'true');
 showNotification('✅ Login wanaagsan!');
 loadAll();
-}else{
-showNotification('❌ Password khaldan!', 'error');
-document.getElementById('password').value = '';
-}
+listenToOrders();
+})
+.catch(error => {
+showNotification(`❌ Login failed: ${error.message}`, 'error');
+})
+.finally(() => document.body.classList.remove('loading'));
 }
 
 function logout(){
 if(!confirm('Ma hubtaa inaad rabto logout?')) return;
-localStorage.removeItem('cs_admin_session');
+auth.signOut().then(() => {
+currentUser = null;
 document.getElementById('loginSection').style.display = 'block';
 document.getElementById('dashboard').style.display = 'none';
+document.getElementById('adminUser').textContent = 'Login Required';
 showNotification('👋 Logout successful!');
+});
 }
 
-function togglePassword(){
-const input = document.getElementById('password'), btn = document.getElementById('togglePass');
-input.type = input.type === 'password' ? 'text' : 'password';
-btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
+// Check auth state
+auth.onAuthStateChanged(user => {
+if(user){
+currentUser = user;
+document.getElementById('adminUser').textContent = user.email.split('@')[0];
+document.getElementById('loginSection').style.display = 'none';
+document.getElementById('dashboard').style.display = 'block';
+loadAll();
+listenToOrders();
 }
+});
 
-// MEDIA UPLOAD
+// 📤 UPLOAD FILES
 function handleImageUpload(e, type){
 const file = e.target.files[0];
 if(!file) return;
 if(!file.type.startsWith('image/')){ showNotification('📁 File waa inuu yahay sawir!', 'error'); return; }
 if(file.size > 2*1024*1024){ showNotification('📏 Sawirku waa inuu ka yar yahay 2MB!', 'error'); return; }
 
-const reader = new FileReader();
-reader.onload = function(event){
-const imgData = event.target.result;
-localStorage.setItem(`cs_${type}_image`, imgData);
-document.getElementById(`${type}Preview`).src = imgData;
+if(!currentUser){ showNotification('Fadlan login!', 'error'); return; }
+
+document.body.classList.add('loading');
+const storageRef = storage.ref().child(`media/images/${type}/${Date.now()}_${file.name}`);
+storageRef.put(file).then(snapshot => {
+return snapshot.ref.getDownloadURL();
+}).then(downloadURL => {
+return db.ref(`media/images/${type}`).set({url: downloadURL, name: file.name, uploadedBy: currentUser.email});
+}).then(() => {
+document.getElementById(`${type}Preview`).src = downloadURL;
 document.getElementById(`${type}Preview`).style.display = 'block';
 showNotification(`✅ ${type} image waa la keydiyay!`);
-localStorage.setItem('cs_image_updated', Date.now());
-};
-reader.readAsDataURL(file);
+}).catch(error => {
+showNotification(`❌ Upload failed: ${error.message}`, 'error');
+}).finally(() => document.body.classList.remove('loading'));
 }
 
 function handleVideoUpload(e){
@@ -297,18 +351,22 @@ const file = e.target.files[0];
 if(!file) return;
 if(!file.type.startsWith('video/')){ showNotification('📁 File waa inuu yahay video!', 'error'); return; }
 if(file.size > 5*1024*1024){ showNotification('📹 Videogu waa inuu ka yar yahay 5MB!', 'error'); return; }
+if(!currentUser){ showNotification('Fadlan login!', 'error'); return; }
 
-const reader = new FileReader();
-reader.onload = function(event){
-const videoData = event.target.result;
-localStorage.setItem('cs_supermarket_video', videoData);
+document.body.classList.add('loading');
+const storageRef = storage.ref().child(`media/videos/supermarket/${Date.now()}_${file.name}`);
+storageRef.put(file).then(snapshot => {
+return snapshot.ref.getDownloadURL();
+}).then(downloadURL => {
+return db.ref('media/videos/supermarket').set({url: downloadURL, name: file.name, uploadedBy: currentUser.email});
+}).then(() => {
 const video = document.getElementById('videoPreview');
-video.src = videoData;
+video.src = downloadURL;
 video.style.display = 'block';
 showNotification('✅ Video waa la keydiyay!');
-localStorage.setItem('cs_video_updated', Date.now());
-};
-reader.readAsDataURL(file);
+}).catch(error => {
+showNotification(`❌ Upload failed: ${error.message}`, 'error');
+}).finally(() => document.body.classList.remove('loading'));
 }
 
 function uploadAPK(system){
@@ -319,79 +377,107 @@ input.onchange = function(e){
 const file = e.target.files[0];
 if(!file) return;
 if(file.size > 10*1024*1024){ showNotification('📦 APK waa inuu ka yar yahay 10MB!', 'error'); return; }
+if(!currentUser){ showNotification('Fadlan login!', 'error'); return; }
 
-const reader = new FileReader();
-reader.onload = function(event){
-const apkData = event.target.result;
-const apks = JSON.parse(localStorage.getItem('cs_apk_files') || '{}');
-apks[system] = {name: file.name, data: apkData, size: file.size, time: Date.now()};
-localStorage.setItem('cs_apk_files', JSON.stringify(apks));
+document.body.classList.add('loading');
+const storageRef = storage.ref().child(`apks/${system}/${Date.now()}_${file.name}`);
+storageRef.put(file).then(snapshot => {
+return snapshot.ref.getDownloadURL();
+}).then(downloadURL => {
+return db.ref(`apks/${system}`).set({url: downloadURL, name: file.name, size: file.size, uploadedBy: currentUser.email});
+}).then(() => {
 showNotification(`✅ ${system} APK waa la keydiyay!`);
-localStorage.setItem('cs_apk_updated', Date.now());
 // Update info
 const info = document.getElementById(`${system}APKInfo`);
 info.textContent = `📦 ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`;
-};
-reader.readAsDataURL(file);
+}).catch(error => {
+showNotification(`❌ Upload failed: ${error.message}`, 'error');
+}).finally(() => document.body.classList.remove('loading'));
 };
 input.click();
 }
 
+// 📺 LOAD DATA
 function loadAll(){
 loadImages();
 loadVideo();
 loadStats();
 loadMessageCount();
-loadOrders();
 loadAPKInfo();
 }
 
 function loadImages(){
 ['logo','pharmacy','hospital','supermarket'].forEach(type => {
-const img = localStorage.getItem(`cs_${type}_image`);
+db.ref(`media/images/${type}`).once('value', snapshot => {
+const data = snapshot.val();
+if(data && data.url){
 const preview = document.getElementById(`${type}Preview`);
-if(img && preview){ preview.src = img; preview.style.display = 'block'; }
+preview.src = data.url;
+preview.style.display = 'block';
+}
+});
 });
 }
 
 function loadVideo(){
-const videoData = localStorage.getItem('cs_supermarket_video');
-if(videoData){
+db.ref('media/videos/supermarket').once('value', snapshot => {
+const data = snapshot.val();
+if(data && data.url){
 const video = document.getElementById('videoPreview');
-video.src = videoData;
+video.src = data.url;
 video.style.display = 'block';
-}
-}
-
-function loadAPKInfo(){
-const apks = JSON.parse(localStorage.getItem('cs_apk_files') || '{}');
-Object.entries(apks).forEach(([system, data]) => {
-const info = document.getElementById(`${system}APKInfo`);
-if(info){
-info.textContent = `📦 ${data.name} (${(data.size/1024/1024).toFixed(1)}MB)`;
 }
 });
 }
 
-// BROADCAST
+function loadAPKInfo(){
+['pharmacy','hospital','supermarket'].forEach(system => {
+db.ref(`apks/${system}`).once('value', snapshot => {
+const data = snapshot.val();
+if(data){
+const info = document.getElementById(`${system}APKInfo`);
+info.textContent = `📦 ${data.name} (${(data.size/1024/1024).toFixed(1)}MB)`;
+}
+});
+});
+}
+
+// 📢 BROADCAST
 function sendBroadcast(){
 const msg = document.getElementById('broadcastMsg').value.trim();
 if(!msg){ showNotification('Fadlan qor farriin!', 'error'); return; }
-const data = {message: msg, time: Date.now(), type: 'broadcast'};
-localStorage.setItem('cs_shared_notification', JSON.stringify(data));
+if(!currentUser){ showNotification('Fadlan login!', 'error'); return; }
+
+db.ref('broadcasts/current').set({
+message: msg,
+time: Date.now(),
+type: 'broadcast',
+author: currentUser.email
+}).then(() => {
 showNotification('📢 Farriinta waxaa la wadaagay dadka dhan!');
 document.getElementById('broadcastMsg').value = '';
+});
 }
 
 function clearBroadcast(){
-localStorage.removeItem('cs_shared_notification');
+db.ref('broadcasts/current').remove().then(() => {
 document.getElementById('broadcastMsg').value = '';
 showNotification('🗑️ Farriinta waa laga saaray');
+});
 }
 
-// ORDERS
-function loadOrders(){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
+// 📋 ORDERS
+function listenToOrders(){
+db.ref('orders').on('value', snapshot => {
+const orders = [];
+snapshot.forEach(child => {
+orders.push({id: child.key, ...child.val()});
+});
+displayOrders(orders);
+});
+}
+
+function displayOrders(orders){
 const tbody = document.querySelector('#ordersTable tbody');
 tbody.innerHTML = '';
 if(!orders.length){
@@ -401,8 +487,21 @@ document.getElementById('totalRevenue').textContent = '$0';
 document.getElementById('pendingOrders').textContent = '0';
 return;
 }
-orders.slice().reverse().forEach(o => tbody.insertAdjacentHTML('beforeend', makeRowHTML(o)));
+orders.reverse().forEach(o => tbody.insertAdjacentHTML('beforeend', makeRowHTML(o)));
 loadStats();
+}
+
+function loadStats(){
+db.ref('orders').once('value', snapshot => {
+const orders = [];
+snapshot.forEach(child => orders.push(child.val()));
+const total = orders.length;
+const revenue = orders.reduce((sum, o) => sum + (Number(o.price)||0), 0);
+const pending = orders.filter(o => !o.status || o.status === 'pending').length;
+document.getElementById('totalOrders').textContent = total;
+document.getElementById('totalRevenue').textContent = `$${revenue}`;
+document.getElementById('pendingOrders').textContent = pending;
+});
 }
 
 function makeRowHTML(o){
@@ -423,26 +522,16 @@ return `<tr>
 </td></tr>`;
 }
 
-function loadStats(){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const total = orders.length;
-const revenue = orders.reduce((sum, o) => sum + (Number(o.price)||0), 0);
-const pending = orders.filter(o => !o.status || o.status === 'pending').length;
-document.getElementById('totalOrders').textContent = total;
-document.getElementById('totalRevenue').textContent = `$${revenue}`;
-document.getElementById('pendingOrders').textContent = pending;
-}
-
 function viewOrder(id){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const o = orders.find(x => x.id === id);
+db.ref(`orders/${id}`).once('value', snapshot => {
+const o = snapshot.val();
 if(!o){ showNotification('Order lama helin!', 'error'); return; }
 const modal = document.getElementById('modal');
 modal.innerHTML = `
 <div class="modal-content">
 <div class="modal-header"><h3>Order Details</h3><span class="close-btn" onclick="closeModal()">&times;</span></div>
 <div style="line-height:1.8">
-<p><strong>ID:</strong> ${escapeHtml(o.id)}</p>
+<p><strong>ID:</strong> ${escapeHtml(id)}</p>
 <p><strong>Magac:</strong> ${escapeHtml(o.name)}</p>
 <p><strong>Phone:</strong> <a href="tel:${escapeHtml(o.phone)}">${escapeHtml(o.phone)}</a></p>
 <p><strong>Region:</strong> ${escapeHtml(o.region)}</p>
@@ -454,32 +543,31 @@ modal.innerHTML = `
 </div>
 </div>`;
 modal.classList.add('show');
+});
 }
 
 function closeModal(){ document.getElementById('modal').classList.remove('show'); }
 
 function toggleStatus(id){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
-const order = orders.find(x => x.id === id);
-if(!order){ showNotification('Order lama helin!', 'error'); return; }
-order.status = order.status === 'paid' ? 'pending' : 'paid';
-localStorage.setItem('cs_orders', JSON.stringify(orders));
-loadOrders();
+const newStatus = prompt('Geli status cusub (paid/pending/cancelled):', 'paid');
+if(!newStatus) return;
+if(!currentUser){ showNotification('Fadlan login!', 'error'); return; }
+db.ref(`orders/${id}/status`).set(newStatus).then(() => {
 showNotification(`✅ Order ${id} waa la update-gareeyay!`);
-localStorage.setItem('cs_order_updated', Date.now());
+});
 }
 
 function deleteOrder(id){
 if(!confirm(`⚠️ Ma hubtaa inaad tirtirto order: ${id}?`)) return;
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]').filter(x => x.id !== id);
-localStorage.setItem('cs_orders', JSON.stringify(orders));
-loadOrders();
+db.ref(`orders/${id}`).remove().then(() => {
 showNotification('🗑️ Order waa la tirtiray!');
-localStorage.setItem('cs_order_updated', Date.now());
+});
 }
 
 function exportCSV(){
-const orders = JSON.parse(localStorage.getItem('cs_orders') || '[]');
+db.ref('orders').once('value', snapshot => {
+const orders = [];
+snapshot.forEach(child => orders.push({id: child.key, ...child.val()}));
 if(!orders.length){ showNotification('📥 Ma jiraan orders!', 'error'); return; }
 const csv = ['ID,Name,Phone,Region,Product,Payment,Price,Time,Status'];
 orders.forEach(o => csv.push([o.id,o.name,o.phone,o.region,o.product,o.payment,o.price,o.time,o.status||'pending'].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')));
@@ -489,18 +577,21 @@ a.href = URL.createObjectURL(blob);
 a.download = `cs_orders_${new Date().toISOString().slice(0,10)}.csv`;
 a.click();
 showNotification('📥 CSV waa la soo rogay!');
+});
 }
 
 function clearAll(){
 if(!confirm('⚠️ DANGER! Ma hubtaa inaad tirtirto dhammaan orders-ka?')) return;
-localStorage.removeItem('cs_orders');
-loadOrders();
+db.ref('orders').remove().then(() => {
 showNotification('🗑️ Dhammaan orders waa la tirtiray!');
+});
 }
 
-// MESSAGES
+// 💬 MESSAGES
 function viewMessages(){
-const msgs = JSON.parse(localStorage.getItem('cs_messages') || '[]');
+db.ref('messages').once('value', snapshot => {
+const msgs = [];
+snapshot.forEach(child => msgs.push({id: child.key, ...child.val()}));
 const modal = document.getElementById('modal');
 if(!msgs.length){
 modal.innerHTML = `
@@ -509,7 +600,7 @@ modal.innerHTML = `
 <p style="text-align:center;color:var(--muted)">📬 Ma jiraan fariimo.</p>
 </div>`;
 }else{
-const html = msgs.slice().reverse().map(m => `
+const html = msgs.reverse().map(m => `
 <div style="border-bottom:1px solid #eef6fb;padding:12px 0">
 <strong>${escapeHtml(m.name)}</strong> (${escapeHtml(m.phone||'No phone')})
 <small class="muted" style="float:right">${new Date(m.time).toLocaleString()}</small>
@@ -523,20 +614,20 @@ modal.innerHTML = `
 </div>`;
 }
 modal.classList.add('show');
+});
 }
 
 function deleteMessage(id){
 if(!confirm('Delete message?')) return;
-const msgs = JSON.parse(localStorage.getItem('cs_messages') || '[]').filter(x => x.id !== id);
-localStorage.setItem('cs_messages', JSON.stringify(msgs));
-loadMessageCount();
+db.ref(`messages/${id}`).remove().then(() => {
 showNotification('🗑️ Message waa la tirtiray!');
+});
 }
 
 function loadMessageCount(){
-const msgs = JSON.parse(localStorage.getItem('cs_messages') || '[]');
-document.getElementById('msgCount').textContent = msgs.length;
-document.getElementById('totalMessages').textContent = msgs.length;
+db.ref('messages').on('value', snapshot => {
+document.getElementById('msgCount').textContent = snapshot.numChildren();
+});
 }
 
 // ESCAPE HTML
@@ -544,23 +635,39 @@ function escapeHtml(s){
 return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); 
 }
 
-// STORAGE SYNC
-window.addEventListener('storage', e => {
-if(e.key === 'cs_order_updated') loadOrders();
-if(e.key === 'cs_message_updated') loadMessageCount();
-if(e.key === 'cs_image_updated') loadImages();
-if(e.key === 'cs_video_updated') loadVideo();
-if(e.key === 'cs_apk_updated') loadAPKInfo();
+// NOTIFICATION
+function showNotification(msg, type='success'){
+const n = document.getElementById('notification');
+n.textContent = msg;
+n.className = `notification show ${type}`;
+setTimeout(() => n.classList.remove('show'), 4000);
+}
+
+function setupDragDrop(){
+['logoUpload', 'pharmacyUpload', 'hospitalUpload', 'supermarketUpload', 'videoUpload'].forEach(id => {
+const area = document.getElementById(id);
+if(!area) return;
+area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
+area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+area.addEventListener('drop', e => {
+e.preventDefault();
+area.classList.remove('dragover');
+if(id === 'videoUpload'){
+const file = e.dataTransfer.files[0];
+document.getElementById('videoInput').files = e.dataTransfer.files;
+handleVideoUpload({target: {files: [file]}});
+}else{
+const type = id.replace('Upload', '').replace('logo', 'logo');
+const file = e.dataTransfer.files[0];
+document.getElementById(type + 'Input').files = e.dataTransfer.files;
+handleImageUpload({target: {files: [file]}}, type);
+}
 });
+});
+}
 
 // INIT
 (function init(){
-const isLogged = localStorage.getItem('cs_admin_session') === 'true';
-if(isLogged){
-document.getElementById('loginSection').style.display = 'none';
-document.getElementById('dashboard').style.display = 'block';
-loadAll();
-}
 setupDragDrop();
 })();
 </script>
